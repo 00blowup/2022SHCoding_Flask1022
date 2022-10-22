@@ -1,4 +1,3 @@
-from ast import Num
 from flask import Flask
 
 
