@@ -15,7 +15,17 @@ topics = [
 
 
 # 중복되는 부분을 함수화함
-def template(content):
+def template(content, id=None):
+    contextUI = ''
+
+    #
+    if id != None:
+        contextUI = f'''
+        <p>
+            <span>To update the data, click this:</span>
+            <a href="/update/{id}">UPDATE</a>
+        </p>
+        '''
 
     str= '' # html 코드를 담을 문자열
 
@@ -32,6 +42,7 @@ def template(content):
                 {str}
             </ol>
             {content}
+            {contextUI}
         </body>
     </html>
     '''
@@ -42,8 +53,9 @@ def template(content):
 def index():
     content = f'''
     <p>Welcome!</p>
-    <p><span>To add new contents, click this:</span>
-    <a href="/create/">CREATE</a>
+    <p>
+        <span>To add new contents, click this:</span>
+        <a href="/create/">CREATE</a>
     </p>
     '''
 
@@ -62,8 +74,9 @@ def read(id):
             <h2>{topic["title"]}</h2>
             <span>{topic["content"]}</span>
             '''
+            break
 
-    return template(content)
+    return template(content, id)
 
 
 # 새로운 데이터를 추가하는 페이지
@@ -99,6 +112,51 @@ def create():
 
         # 다음 새 데이터에 부여될 수 있도록 id 값을 1 증가시키기
         nextId = nextId+1
+        
+        # 사용자를 url 화면으로 보내기
+        return redirect(url)
+
+
+# 기존의 데이터를 수정하는 페이지
+@app.route('/update/<int:id>', methods = ['GET', 'POST'])
+def update(id):
+    # GET(읽기) 요청을 받은 경우
+    if request.method == 'GET':
+
+        thisTitle = ''
+        thisBody = ''
+        for topic in topics:
+            if topic['id'] == id:
+                thisTitle = topic['title']
+                thisBody = topic['content']
+                break
+
+        content = f'''
+         <form action="/update/{id}" method="POST">
+            <p><input type="text" name="title" placeholder="title" value="{thisTitle}">
+            </p>
+            <p><textarea name="body" placeholder="body">{thisBody}</textarea></p>
+            <p><input type="submit" value="update"></p>
+         </form>
+         '''
+
+        return template(content)
+
+    # POST(쓰기) 요청을 받은 경우
+    elif request.method == 'POST':
+        # 사용자가 적은 정보를 가져와 title, body에 저장
+        title = request.form['title']
+        body = request.form['body']
+
+        # 데이터베이스 업데이트
+        for topic in topics:
+            if topic['id'] == id:
+                topic['title'] = title
+                topic['content'] = body
+        
+
+        # 사용자를 데리고 갈 url을 생성
+        url = '/read/' + str(id) + '/'
         
         # 사용자를 url 화면으로 보내기
         return redirect(url)
